@@ -1,6 +1,10 @@
 from pages.base_page import BasePage
 from pages.locators import ProductPageLocators
 
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import StaleElementReferenceException
+
 
 class ProductPage(BasePage):
     def add_to_cart(self):
@@ -13,14 +17,24 @@ class ProductPage(BasePage):
 
     def should_be_product_name_in_success_message(self):
         """Название товара в сообщении должно совпадать с реальным товаром."""
-        product_name = self.browser.find_element(*ProductPageLocators.PRODUCT_NAME).text
-        message_product_name = self.browser.find_element(
-            *ProductPageLocators.SUCCESS_MESSAGE_PRODUCT_NAME
-        ).text
-        assert product_name == message_product_name, (
-            f"Имя товара в сообщении не совпадает: "
-            f"ожидали '{product_name}', а в сообщении '{message_product_name}'"
-        )
+        for _ in range(3):  # небольшая защита от случайного stale
+            try:
+                product_name = WebDriverWait(self.browser, 10).until(
+                    EC.visibility_of_element_located(ProductPageLocators.PRODUCT_NAME)
+                ).text
+                message_product_name = WebDriverWait(self.browser, 10).until(
+                    EC.visibility_of_element_located(ProductPageLocators.SUCCESS_MESSAGE_PRODUCT_NAME)
+                ).text
+
+                assert product_name == message_product_name, (
+                    f"Имя товара в сообщении не совпадает: "
+                    f"ожидали '{product_name}', а в сообщении '{message_product_name}'"
+                )
+                return
+            except StaleElementReferenceException:
+                # пробуем ещё раз, на третьем заходе уже пусть упадёт
+                if _ == 2:
+                    raise
 
     def should_basket_total_be_equal_to_product_price(self):
         """Стоимость корзины должна совпадать с ценой товара."""
