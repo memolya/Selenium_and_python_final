@@ -29,3 +29,13 @@ class ProductPage(BasePage):
         assert product_price == basket_total, (
             f"Сумма в корзине '{basket_total}' не равна цене товара '{product_price}'"
         )
+
+    def should_not_be_success_message(self):
+        """После добавления товара в корзину пользователь не должен видеть сообщение об успехе"""
+        assert self.is_not_element_present(*ProductPageLocators.SUCCESS_MESSAGE_PRODUCT_NAME), \
+            "Success message is presented, but should not be"
+
+    def success_message_should_disappear(self):
+        """После добавления товара в корзину появляется сообщение об успехе, затем исчезает"""
+        assert self.is_disappeared(*ProductPageLocators.SUCCESS_MESSAGE_PRODUCT_NAME), \
+            "Success message did not disappear"
